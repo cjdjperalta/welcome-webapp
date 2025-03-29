@@ -1,8 +1,12 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'maven:3.9.4-eclipse-temurin-17'
+        }
+    }
 
     triggers {
-        pollSCM('* * * * *') // Polls the repo every minute
+        pollSCM('* * * * *')
     }
 
     stages {
