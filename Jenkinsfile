@@ -1,12 +1,9 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.9.4-eclipse-temurin-17'
-        }
-    }
+    agent any
 
-    triggers {
-        pollSCM('* * * * *')
+    environment {
+        DOCKER_HUB_USER = 'cjdjperalta'
+        DOCKER_IMAGE = "${DOCKER_HUB_USER}/welcome-webapp"
     }
 
     stages {
@@ -16,15 +13,33 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build Maven Project') {
             steps {
                 sh 'mvn clean package'
             }
         }
 
-        stage('Post-Build') {
+        stage('Docker Login') {
             steps {
-                echo 'Build completed successfully!'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials', // Add this to Jenkins Credentials
+                    usernameVariable: 'USERNAME',
+                    passwordVariable: 'PASSWORD'
+                )]) {
+                    sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE .'
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                sh 'docker push $DOCKER_IMAGE'
             }
         }
     }
