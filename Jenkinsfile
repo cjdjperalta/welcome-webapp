@@ -1,11 +1,9 @@
 pipeline {
     agent any
-
     environment {
-        DOCKER_HUB_USER = 'cjdjperalta'
-        DOCKER_IMAGE = "${DOCKER_HUB_USER}/welcome-webapp"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
+        IMAGE_NAME = "cjdjperalta/welcome-webapp"
     }
-
     stages {
         stage('Checkout') {
             steps {
@@ -21,25 +19,19 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials', // Add this to Jenkins Credentials
-                    usernameVariable: 'USERNAME',
-                    passwordVariable: 'PASSWORD'
-                )]) {
-                    sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
-                }
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh 'docker build -t $IMAGE_NAME:latest .'
             }
         }
 
         stage('Docker Push') {
             steps {
-                sh 'docker push $DOCKER_IMAGE'
+                sh 'docker push $IMAGE_NAME:latest'
             }
         }
     }
